@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+ 
+using namespace std;
+ 
+long long calculate_score(const vector<int>& concatenated_array) {
+    long long total_sum = 0;
+    long long current_sum = 0;
+    for (int num : concatenated_array) {
+        current_sum += num;
+        total_sum += current_sum;
+    }
+    return total_sum;
+}
+ 
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+ 
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> arrays(n, vector<int>(m));
+        vector<long long> array_sums(n);
+ 
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                cin >> arrays[i][j];
+            }
+            array_sums[i] = accumulate(arrays[i].begin(), arrays[i].end(), 0LL);
+        }
+ 
+        vector<int> indices(n);
+        iota(indices.begin(), indices.end(), 0);
+        sort(indices.begin(), indices.end(), [&array_sums](int i, int j) {
+            return array_sums[i] > array_sums[j];
+        });
+        
+        vector<int> concatenated_array;
+        for (int idx : indices) {
+            concatenated_array.insert(concatenated_array.end(), arrays[idx].begin(), arrays[idx].end());
+        }
+ 
+        cout << calculate_score(concatenated_array) << "\n";
+    }
+ 
+    return 0;
+}

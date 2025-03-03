@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+ 
+using namespace std;
+ 
+bool can_sort_non_decreasing(vector<int>& a, int b) {
+    int n = a.size();
+    vector<int> prev_values;
+ 
+    prev_values.push_back(a[0]);
+    if (b - a[0] != a[0]) {
+        prev_values.push_back(b - a[0]);
+    }
+ 
+    for (int i = 1; i < n; ++i) {
+        vector<int> curr_values;
+        vector<int> possible_values = {a[i]};
+        if (b - a[i] != a[i]) {
+            possible_values.push_back(b - a[i]);
+        }
+ 
+        for (int val : possible_values) {
+            for (int prev_val : prev_values) {
+                if (prev_val <= val) {
+                    curr_values.push_back(val);
+                    break; 
+                }
+            }
+        }
+ 
+        if (curr_values.empty()) {
+            return false;
+        }
+ 
+        sort(curr_values.begin(), curr_values.end());
+        curr_values.erase(unique(curr_values.begin(), curr_values.end()), curr_values.end());
+ 
+        prev_values = curr_values;
+    }
+ 
+    return true;
+}
+ 
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+ 
+    int t; 
+    cin >> t;
+    while (t--) {
+        int n, m; 
+        cin >> n >> m;
+        int b;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cin >> b;
+        cout << (can_sort_non_decreasing(a, b) ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}
