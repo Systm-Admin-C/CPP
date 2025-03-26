@@ -1,0 +1,156 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+int main() {
+    // -----------------------------
+    // Setup: grid dimensions & ranges
+    // -----------------------------
+    // We'll use a grid where columns represent x and rows represent T.
+    // x ranges from -45 to 45 (i.e. 91 columns if each integer unit is one column),
+    // T (or y) ranges from 1.55 to 1.90.
+    const int gridWidth = 91;   // from x = -45 to x = 45 (inclusive)
+    const int gridHeight = 25;  // chosen for decent vertical resolution
+
+    // Data coordinate ranges
+    double xMin = -45.0, xMax = 45.0;
+    double yMin = 1.55, yMax = 1.90;
+
+    // Create a 2D grid filled with spaces
+    vector<vector<char>> grid(gridHeight, vector<char>(gridWidth, ' '));
+
+    // --------------------------------------
+    // Mapping functions: from data to grid indices
+    // Note: row 0 is the top of the grid.
+    // --------------------------------------
+    auto mapX = [&](double x) -> int {
+        return static_cast<int>(round((x - xMin) / (xMax - xMin) * (gridWidth - 1)));
+    };
+    auto mapY = [&](double y) -> int {
+        // Invert y so that higher T values appear at the top.
+        return static_cast<int>(round((yMax - y) / (yMax - yMin) * (gridHeight - 1)));
+    };
+
+    // --------------------------------------
+    // Draw Axes
+    // --------------------------------------
+    // Vertical axis at x = 0
+    int axisX = mapX(0.0);
+    for (int row = 0; row < gridHeight; ++row) {
+        if (grid[row][axisX] == ' ') {
+            grid[row][axisX] = '|';
+        }
+    }
+    // Horizontal axis along the lower bound (T = 1.55), i.e. bottom of the plot.
+    int axisY = mapY(yMin);
+    for (int col = 0; col < gridWidth; ++col) {
+        if (grid[axisY][col] == ' ') {
+            grid[axisY][col] = '-';
+        }
+    }
+
+    // --------------------------------------
+    // Define the functions for the curves
+    // --------------------------------------
+    // Side A (to be drawn with '*'): x from -40 to -15.
+    // T_A(x) = 1.600 + 0.250 - 0.0016*(x + 27.5)^2.
+    auto T_A = [](double x) -> double {
+        return 1.600 + 0.250 - 0.0016 * (x + 27.5) * (x + 27.5);
+    };
+
+    // Side B (to be drawn with '+'): x from 15 to 40.
+    // T_B(x) = 1.600 + 0.250 - 0.0016*(x - 27.5)^2.
+    auto T_B = [](double x) -> double {
+        return 1.600 + 0.250 - 0.0016 * (x - 27.5) * (x - 27.5);
+    };
+
+    // --------------------------------------
+    // Plot the curves using sampling
+    // --------------------------------------
+    const int samples = 100;  // number of sample points per curve
+
+    // Plot Side A curve (x from -40 to -15) with '*' 
+    for (int i = 0; i <= samples; ++i) {
+        double x = -40.0 + (i / static_cast<double>(samples)) * ( -15.0 - (-40.0) );
+        double y = T_A(x);
+        int col = mapX(x);
+        int row = mapY(y);
+        if (row >= 0 && row < gridHeight && col >= 0 && col < gridWidth) {
+            grid[row][col] = '*';
+        }
+    }
+
+    // Plot Side B curve (x from 15 to 40) with '+'
+    for (int i = 0; i <= samples; ++i) {
+        double x = 15.0 + (i / static_cast<double>(samples)) * (40.0 - 15.0);
+        double y = T_B(x);
+        int col = mapX(x);
+        int row = mapY(y);
+        if (row >= 0 && row < gridHeight && col >= 0 && col < gridWidth) {
+            grid[row][col] = '+';
+        }
+    }
+
+    // --------------------------------------
+    // Mark special points with their labels.
+    // Points: A, B, C, D, M, N, O.
+    // A = (-40, 1.600), B = (-15, 1.600), C = (15, 1.600), D = (40, 1.600)
+    // M = (-26, T_A(-26)), N = (0, 1.8464), O = (26, T_B(26))
+    // --------------------------------------
+    struct LabeledPoint {
+        double x;
+        double y;
+        char label;
+    };
+    LabeledPoint pts[] = {
+        {-40, 1.600, 'A'},
+        {-15, 1.600, 'B'},
+        {15,  1.600, 'C'},
+        {40,  1.600, 'D'},
+        {-26, T_A(-26), 'M'},
+        {0,   1.8464,  'N'},
+        {26,  T_B(26), 'O'}
+    };
+    for (auto &pt : pts) {
+        int col = mapX(pt.x);
+        int row = mapY(pt.y);
+        if (row >= 0 && row < gridHeight && col >= 0 && col < gridWidth) {
+            grid[row][col] = pt.label;
+        }
+    }
+
+    // Optionally, mark some tick positions along the x-axis (e.g. -40, -26, -15, 0, 15, 26, 40)
+    int xTicks[] = {-40, -26, -15, 0, 15, 26, 40};
+    for (int tick : xTicks) {
+        int col = mapX(tick);
+        if (axisY >= 0 && axisY < gridHeight && col >= 0 && col < gridWidth) {
+            grid[axisY][col] = '+';
+        }
+    }
+
+    // And mark some ticks along the y-axis on the left edge for T = 1.60, 1.70, 1.80, 1.90.
+    double yTicks[] = {1.60, 1.70, 1.80, 1.90};
+    for (double tick : yTicks) {
+        int row = mapY(tick);
+        if (row >= 0 && row < gridHeight) {
+            grid[row][0] = '*';
+        }
+    }
+
+    // --------------------------------------
+    // Print the grid to the console
+    // --------------------------------------
+    for (int row = 0; row < gridHeight; ++row) {
+        for (int col = 0; col < gridWidth; ++col) {
+            cout << grid[row][col];
+        }
+        cout << "\n";
+    }
+
+    // Print basic axis info after the graph.
+    cout << "\nX axis: " << xMin << " to " << xMax << endl;
+    cout << "T axis: " << yMin << " to " << yMax << endl;
+
+    return 0;
+}
