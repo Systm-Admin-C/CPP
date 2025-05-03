@@ -1,0 +1,46 @@
+
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll k;
+        cin >> n >> k;
+        vector<ll> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        ll M = -1;
+        bool ok = true;
+        for (int i = 0; i < n; i++) {
+            if (b[i] != -1) {
+                ll m = a[i] + b[i];
+                if (M == -1) M = m;
+                else if (M != m) {
+                    ok = false;
+                    break;
+                }
+            }
+        }
+        if (!ok) {
+            cout << 0 << "\n";
+            continue;
+        }
+        ll L = 0, R = LLONG_MAX;
+        for (int i = 0; i < n; i++) {
+            L = max(L, a[i]);
+            R = min(R, a[i] + k);
+        }
+        if (M == -1) {
+            ll ans = (R >= L ? R - L + 1 : 0);
+            cout << ans << "\n";
+        } else {
+            cout << (M >= L && M <= R ? 1 : 0) << "\n";
+        }
+    }
+    return 0;
+}
